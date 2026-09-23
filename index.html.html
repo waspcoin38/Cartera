@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi cartera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF2EF; --paper:#FAFBF9; --ink:#1C2B36; --soft:#5B6B73; --line:#D3DBD6;
+  --green:#1F6B52; --ochre:#9A6B06; --red:#A33A3A; --field:#F2F5F3;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --sans:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#121B19;--paper:#18231F;--ink:#E4EBE7;--soft:#95A59E;--line:#2C3A35;
+    --green:#5CC29A;--ochre:#E0B04A;--red:#E07A7A;--field:#1F2C28;}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:auto}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;
+  font-variant-numeric:tabular-nums;padding:20px 16px 48px;max-width:1100px;margin:0 auto}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(40px,9vw,72px);line-height:1;letter-spacing:-.02em}
+h2{font-family:var(--serif);font-weight:600;font-size:22px;margin-bottom:12px}
+.muted{color:var(--soft);font-size:13px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:8px}
+.pl{font-size:17px;font-weight:600}
+.pos{color:var(--green)} .neg{color:var(--red)} .warn{color:var(--ochre)}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:18px}
+.ribbon{display:flex;height:22px;border-radius:4px;overflow:hidden;margin:18px 0 8px}
+.ribbon div{height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--soft)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.stat b{display:block;font-family:var(--serif);font-size:26px;font-weight:600;line-height:1.1}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-weight:500;font-size:12.5px;color:var(--soft);padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.num,th.num{text-align:right}
+input,select{font:inherit;color:var(--ink);background:var(--field);border:1px solid transparent;border-radius:6px;padding:6px 8px;width:100%}
+input:focus,select:focus{outline:2px solid var(--green);outline-offset:1px}
+input.n{text-align:right;width:92px}
+input.name{min-width:140px}
+button{font:inherit;font-weight:500;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+button.primary{background:var(--green);border-color:var(--green);color:#fff}
+button.del{border:none;background:none;color:var(--soft);font-size:18px;padding:4px 8px}
+button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.bar{position:relative;height:8px;background:var(--field);border-radius:4px;margin-top:4px}
+.bar span{position:absolute;top:0;height:100%;border-radius:4px}
+.bar em{position:absolute;top:-3px;height:14px;background:var(--ink);opacity:.25;border-radius:2px}
+.cat{padding:8px 0;border-bottom:1px solid var(--line)}
+.cat:last-child{border-bottom:none}
+.cat-head{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.cat-head input{width:52px;padding:3px 6px;text-align:right}
+.note{font-size:13px;color:var(--soft);margin-top:10px;max-width:70ch}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+
+#lock{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;z-index:10}
+#lock.hidden{display:none}
+.lockbox{width:100%;max-width:280px;text-align:center}
+.lockbox h1{font-size:32px;margin-bottom:6px}
+.lockbox p{color:var(--soft);font-size:13.5px;margin-bottom:22px}
+#pinDots{display:flex;justify-content:center;gap:10px;margin-bottom:22px}
+#pinDots span{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--soft)}
+#pinDots span.filled{background:var(--ink);border-color:var(--ink)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keypad button{aspect-ratio:1;font-size:22px;border-radius:50%;background:var(--field);border:1px solid var(--line)}
+.keypad button.wide{font-size:13px;background:none;border:none}
+#lockErr{color:var(--red);font-size:13px;min-height:18px;margin-top:12px}
+#setupNote{font-size:12.5px;color:var(--soft);margin-top:16px}
+#setupNote button{border:none;background:none;text-decoration:underline;color:var(--soft);padding:2px}
+
+#staleBanner{display:none;background:var(--field);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#staleBanner button{white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="lockbox">
+    <h1 id="lockTitle">Cartera</h1>
+    <p id="lockSub">Introduce tu PIN</p>
+    <div id="pinDots"><span></span><span></span><span></span><span></span></div>
+    <div class="keypad">
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button class="wide"></button><button data-k="0">0</button><button class="wide" id="pinBack">←</button>
+    </div>
+    <p id="lockErr"></p>
+    <p id="setupNote"></p>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+<div id="staleBanner"><span>No abres esta página desde hace tiempo — <strong>descarga una copia</strong> por si tu navegador borrase los datos.</span><span style="display:flex;gap:8px"><button id="staleExport">Descargar</button><button id="staleDismiss">Ahora no</button></span></div>
+
+<header>
+  <div>
+    <p class="muted" id="fecha">Sin datos guardados</p>
+    <h1 id="total">0 €</h1>
+    <p class="pl" id="plTotal"></p>
+  </div>
+</header>
+
+<div class="ribbon" id="ribbon" aria-label="Distribución por categoría"></div>
+<div class="legend" id="legend"></div>
+
+<section>
+  <h2>Riesgo</h2>
+  <div class="stats">
+    <div class="stat"><span class="muted">Volatilidad anual estimada</span><b id="vol">–</b></div>
+    <div class="stat"><span class="muted">Pérdida posible en un mal año (95%)</span><b id="var95">–</b></div>
+    <div class="stat"><span class="muted">Pérdida posible en un año muy malo (99%)</span><b id="var99">–</b></div>
+    <div class="stat"><span class="muted">Correlación media supuesta</span>
+      <input id="corr" class="n" inputmode="decimal" value="0,4" aria-label="Correlación media entre activos"></div>
+  </div>
+  <p class="note">Estimación con volatilidades históricas que tú introduces y una correlación media entre activos. Sirve para comparar meses, no como predicción.</p>
+</section>
+
+<section>
+  <h2>Posiciones</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Activo</th><th>Categoría</th><th class="num">Valor €</th><th class="num">Coste €</th>
+        <th class="num">Volat. %</th><th class="num">Peso</th><th class="num">Rentab.</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="actions">
+    <button class="primary" id="add">Añadir posición</button>
+    <button id="snap">Guardar foto del mes</button>
+  </div>
+  <p class="note">Deja el coste vacío si no lo conoces; la rentabilidad aparecerá cuando lo rellenes. Los cambios se guardan solos en este navegador.</p>
+</section>
+
+<section>
+  <h2>Pesos frente a objetivo</h2>
+  <div id="cats"></div>
+</section>
+
+<section>
+  <h2>Evolución</h2>
+  <div class="scroll"><table style="min-width:420px">
+    <thead><tr><th>Fecha</th><th class="num">Valor</th><th class="num">Coste</th><th class="num">Volat.</th><th></th></tr></thead>
+    <tbody id="hist"></tbody>
+  </table></div>
+  <p class="note" id="histEmpty">Pulsa «Guardar foto del mes» cada vez que actualices los valores para ver la evolución aquí.</p>
+</section>
+
+<section>
+  <h2>Copia de seguridad</h2>
+  <p class="note" style="margin-top:0">Los datos solo viven en este navegador. Descarga una copia de vez en cuando; si cambias de móvil o borras datos del navegador, la recuperas con «Cargar copia».</p>
+  <div class="actions">
+    <button id="export">Descargar copia</button>
+    <button id="importBtn">Cargar copia</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+    <button id="reset">Borrar todos los datos</button>
+  </div>
+</section>
+
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+const KEY='cartera-luis-v1';
+const PALETTE=['#1F6B52','#3E8E7E','#6FA8A0','#C9A227','#A7A9AC','#D9822B','#B5563C','#6B5B95','#4A6FA5','#8C8C6E','#9FB7C9'];
+
+const EJEMPLO={
+  corr:0.4,
+  cats:{},
+  rows:[],
+  hist:[], updated:null
+};
+
+let S;
+function load(){
+  try{const raw=localStorage.getItem(KEY); S=raw?JSON.parse(raw):null;}catch(e){S=null;}
+  if(!S||!Array.isArray(S.rows)) S=JSON.parse(JSON.stringify(EJEMPLO));
+  S.hist=S.hist||[]; S.cats=S.cats||{};
+}
+function save(){
+  S.updated=new Date().toISOString();
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('No se pudo guardar en este navegador');}
+}
+const num=s=>{if(s===''||s==null)return null;const x=parseFloat(String(s).replace(/\./g,'').replace(',','.'));return isNaN(x)?null:x;};
+const numDec=s=>{if(s===''||s==null)return null;const x=parseFloat(String(s).replace(',','.'));return isNaN(x)?null:x;};
+const eur=x=>x.toLocaleString('es-ES',{maximumFractionDigits:0})+' €';
+const pct=(x,d=1)=>(x>0?'+':'')+x.toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d})+' %';
+const fmtIn=x=>x==null?'':x.toLocaleString('es-ES',{maximumFractionDigits:2,useGrouping:false});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1800);}
+
+function metrics(){
+  const tot=S.rows.reduce((a,r)=>a+(r.v||0),0);
+  const withCost=S.rows.filter(r=>r.k!=null&&r.k>0);
+  const kTot=withCost.reduce((a,r)=>a+r.k,0), vK=withCost.reduce((a,r)=>a+(r.v||0),0);
+  const w=S.rows.map(r=>[tot?(r.v||0)/tot:0,(r.vol||0)/100]);
+  let sq=0,cr=0;
+  for(let i=0;i<w.length;i++){sq+=w[i][0]**2*w[i][1]**2;for(let j=i+1;j<w.length;j++)cr+=2*S.corr*w[i][0]*w[j][0]*w[i][1]*w[j][1];}
+  const vol=Math.sqrt(Math.max(sq+cr,0))*100;
+  return{tot,kTot,vK,vol};
+}
+function catColor(c){const keys=Object.keys(S.cats);S.rows.forEach(r=>{if(!keys.includes(r.c))keys.push(r.c)});return PALETTE[keys.indexOf(c)%PALETTE.length];}
+
+function renderRows(){
+  const tb=document.getElementById('rows');
+  const cats=[...new Set([...Object.keys(S.cats),...S.rows.map(r=>r.c)])];
+  tb.innerHTML=S.rows.map((r,i)=>`<tr>
+    <td><input class="name" data-i="${i}" data-f="n" value="${esc(r.n)}" aria-label="Nombre"></td>
+    <td><select data-i="${i}" data-f="c" aria-label="Categoría">${cats.map(c=>`<option${c===r.c?' selected':''}>${esc(c)}</option>`).join('')}<option value="__new">Nueva…</option></select></td>
+    <td class="num"><input class="n" inputmode="decimal" data-i="${i}" data-f="v" value="${fmtIn(r.v)}" aria-label="Valor"></td>
+    <td class="num"><input class="n" inputmode="decimal" data-i="${i}" data-f="k" value="${fmtIn(r.k)}" placeholder="—" aria-label="Coste"></td>
+    <td class="num"><input class="n" inputmode="decimal" data-i="${i}" data-f="vol" value="${fmtIn(r.vol)}" aria-label="Volatilidad"></td>
+    <td class="num" id="w${i}"></td><td class="num" id="p${i}"></td>
+    <td><button class="del" data-del="${i}" aria-label="Eliminar ${esc(r.n)}">×</button></td></tr>`).join('');
+}
+function renderCalc(){
+  const m=metrics();
+  document.getElementById('total').textContent=eur(m.tot);
+  document.getElementById('fecha').textContent=S.updated?'Actualizado el '+new Date(S.updated).toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}):'Datos de ejemplo';
+  const pl=document.getElementById('plTotal');
+  if(m.kTot>0){const g=m.vK-m.kTot;pl.textContent=(g>=0?'+':'')+eur(g)+'  ('+pct(g/m.kTot*100)+') en posiciones con coste';pl.className='pl '+(g>=0?'pos':'neg');}
+  else{pl.textContent='Añade costes para ver la rentabilidad';pl.className='pl muted';}
+  document.getElementById('vol').textContent=m.vol.toLocaleString('es-ES',{maximumFractionDigits:1})+' %';
+  document.getElementById('var95').textContent='−'+eur(m.tot*m.vol*1.645/100);
+  document.getElementById('var99').textContent='−'+eur(m.tot*m.vol*2.326/100);
+  S.rows.forEach((r,i)=>{
+    const w=document.getElementById('w'+i),p=document.getElementById('p'+i);if(!w)return;
+    w.textContent=m.tot?((r.v||0)/m.tot*100).toLocaleString('es-ES',{maximumFractionDigits:1})+' %':'–';
+    if(r.k>0){const x=((r.v||0)-r.k)/r.k*100;p.textContent=pct(x);p.className='num '+(x>=0?'pos':'neg');}else{p.textContent='—';p.className='num muted';}
+  });
+  // Categorías
+  const byCat={};S.rows.forEach(r=>byCat[r.c]=(byCat[r.c]||0)+(r.v||0));
+  const catList=[...new Set([...Object.keys(S.cats),...Object.keys(byCat)])];
+  document.getElementById('ribbon').innerHTML=catList.filter(c=>byCat[c]>0).map(c=>`<div style="width:${byCat[c]/m.tot*100}%;background:${catColor(c)}" title="${esc(c)}"></div>`).join('');
+  document.getElementById('legend').innerHTML=catList.filter(c=>byCat[c]>0).map(c=>`<span><i style="background:${catColor(c)}"></i>${esc(c)} ${(byCat[c]/m.tot*100).toLocaleString('es-ES',{maximumFractionDigits:1})} %</span>`).join('');
+  document.getElementById('cats').innerHTML=catList.map(c=>{
+    const t=S.cats[c]||[0,0],a=m.tot?(byCat[c]||0)/m.tot*100:0,mid=(t[0]+t[1])/2,scale=Math.max(a,t[1],1)*1.2;
+    const cls=a<t[0]-0.5?'neg':a>t[1]+0.5?'warn':'pos';
+    const txt=a<t[0]?'faltan '+eur((t[0]-a)/100*m.tot):a>t[1]?'sobran '+eur((a-t[1])/100*m.tot):'en rango';
+    return `<div class="cat"><div class="cat-head"><span><b>${esc(c)}</b> <span class="${cls}">${a.toLocaleString('es-ES',{maximumFractionDigits:1})} % · ${txt}</span></span>
+      <span class="muted">objetivo <input inputmode="decimal" data-cat="${esc(c)}" data-b="0" value="${fmtIn(t[0])}" aria-label="Mínimo ${esc(c)}"> – <input inputmode="decimal" data-cat="${esc(c)}" data-b="1" value="${fmtIn(t[1])}" aria-label="Máximo ${esc(c)}"> %</span></div>
+      <div class="bar"><span style="left:0;width:${a/scale*100}%;background:${catColor(c)}"></span><em style="left:${t[0]/scale*100}%;width:${Math.max((t[1]-t[0])/scale*100,0.6)}%"></em></div></div>`;
+  }).join('');
+  // Historial
+  const h=document.getElementById('hist');
+  document.getElementById('histEmpty').style.display=S.hist.length?'none':'block';
+  h.innerHTML=S.hist.slice().reverse().map((x,ri)=>{const i=S.hist.length-1-ri;const prev=S.hist[i-1];
+    const d=prev?(x.v-prev.v)/prev.v*100:null;
+    return `<tr><td>${new Date(x.d).toLocaleDateString('es-ES')}</td><td class="num">${eur(x.v)} ${d!=null?`<span class="${d>=0?'pos':'neg'}">${pct(d)}</span>`:''}</td>
+    <td class="num">${x.k?eur(x.k):'—'}</td><td class="num">${x.vol.toLocaleString('es-ES',{maximumFractionDigits:1})} %</td>
+    <td><button class="del" data-hdel="${i}" aria-label="Borrar foto">×</button></td></tr>`;}).join('');
+}
+function render(){renderRows();renderCalc();document.getElementById('corr').value=fmtIn(S.corr);}
+
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.f){const r=S.rows[t.dataset.i];
+    if(t.dataset.f==='n')r.n=t.value; else if(t.dataset.f!=='c')r[t.dataset.f]=t.dataset.f==='vol'?numDec(t.value):num(t.value);
+    save();renderCalc();}
+  else if(t.dataset.cat){const c=t.dataset.cat;S.cats[c]=S.cats[c]||[0,0];S.cats[c][+t.dataset.b]=numDec(t.value)||0;save();
+    clearTimeout(t._t);t._t=setTimeout(()=>{const pos=document.activeElement===t;renderCalc();if(pos){const n=document.querySelector(`[data-cat="${CSS.escape(c)}"][data-b="${t.dataset.b}"]`);n&&n.focus();}},900);}
+  else if(t.id==='corr'){const c=numDec(t.value);if(c!=null&&c>=0&&c<=1){S.corr=c;save();renderCalc();}}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;if(t.dataset.f!=='c')return;
+  let v=t.value;
+  if(v==='__new'){v=(prompt('Nombre de la nueva categoría')||'').trim();if(!v){render();return;}if(!S.cats[v])S.cats[v]=[0,0];}
+  S.rows[t.dataset.i].c=v;save();render();
+});
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.dataset.del!=null){const r=S.rows[t.dataset.del];if(confirm('¿Eliminar '+r.n+'?')){S.rows.splice(t.dataset.del,1);save();render();}}
+  if(t.dataset.hdel!=null){S.hist.splice(t.dataset.hdel,1);save();renderCalc();}
+});
+document.getElementById('add').onclick=()=>{S.rows.push({n:'Nueva posición',c:Object.keys(S.cats)[0]||'Global',v:0,k:null,vol:15});save();render();
+  const ins=document.querySelectorAll('input.name');ins[ins.length-1].focus();ins[ins.length-1].select();};
+document.getElementById('snap').onclick=()=>{const m=metrics();S.hist.push({d:new Date().toISOString(),v:m.tot,k:m.kTot,vol:m.vol});save();renderCalc();toast('Foto guardada');};
+document.getElementById('export').onclick=()=>{
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cartera_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();toast('Copia descargada');};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.rows))throw 0;S=d;S.hist=S.hist||[];S.cats=S.cats||{};save();render();toast('Copia cargada');}
+    catch(err){toast('Ese archivo no es una copia válida de la cartera');}};
+  rd.readAsText(f);e.target.value='';};
+document.getElementById('reset').onclick=()=>{if(confirm('Se borrarán todos los datos de este navegador. ¿Continuar?')){S=JSON.parse(JSON.stringify(EJEMPLO));save();render();toast('Datos borrados');}};
+
+// --- PIN de acceso local ---
+const PKEY='cartera-luis-pin-v1';
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+let pin='',mode='';// 'setup' | 'confirm' | 'unlock'
+let pinFirst='';
+function dots(){document.querySelectorAll('#pinDots span').forEach((d,i)=>d.classList.toggle('filled',i<pin.length));}
+function lockErr(m){document.getElementById('lockErr').textContent=m||'';}
+function startLock(){
+  const saved=localStorage.getItem(PKEY);
+  if(saved){mode='unlock';document.getElementById('lockSub').textContent='Introduce tu PIN';document.getElementById('setupNote').innerHTML='';}
+  else{mode='setup';document.getElementById('lockSub').textContent='Crea un PIN de 4 dígitos para proteger tu cartera';
+    document.getElementById('setupNote').innerHTML='<button id="skipPin">Usar sin PIN</button>';
+    document.getElementById('skipPin').onclick=()=>unlock();}
+  pin='';dots();lockErr('');
+}
+async function submitPin(){
+  if(mode==='setup'){
+    if(!pinFirst){pinFirst=pin;pin='';dots();document.getElementById('lockSub').textContent='Repite el PIN';return;}
+    if(pin!==pinFirst){lockErr('No coincide, empieza de nuevo');pin='';pinFirst='';dots();document.getElementById('lockSub').textContent='Crea un PIN de 4 dígitos para proteger tu cartera';return;}
+    localStorage.setItem(PKEY,await sha(pin));unlock();
+  }else{
+    const h=await sha(pin);
+    if(h===localStorage.getItem(PKEY)){unlock();}
+    else{lockErr('PIN incorrecto');pin='';dots();}
+  }
+}
+function unlock(){
+  document.getElementById('lock').classList.add('hidden');
+  document.getElementById('app').style.display='';
+  load();render();checkStale();
+}
+document.querySelectorAll('.keypad [data-k]').forEach(b=>b.onclick=()=>{
+  if(pin.length>=4)return; pin+=b.dataset.k; dots(); lockErr('');
+  if(pin.length===4) submitPin();
+});
+document.getElementById('pinBack').onclick=()=>{pin=pin.slice(0,-1);dots();lockErr('');};
+
+// --- Aviso de datos sin respaldar hace tiempo ---
+function checkStale(){
+  const last=localStorage.getItem('cartera-luis-lastopen');
+  const now=Date.now();
+  if(last && now-parseInt(last) > 45*86400000){
+    document.getElementById('staleBanner').style.display='flex';
+  }
+  localStorage.setItem('cartera-luis-lastopen',String(now));
+}
+document.getElementById('staleDismiss').onclick=()=>{document.getElementById('staleBanner').style.display='none';};
+document.getElementById('staleExport').onclick=()=>{document.getElementById('export').click();document.getElementById('staleBanner').style.display='none';};
+
+startLock();
+</script>
+</body>
+</html>
