@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Contratos y Pólizas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una columna. Resumen arriba, lista ordenada por la próxima fecha límite, formulario y copia de seguridad debajo. */
+:root {
+  color-scheme: light;
+  --bg: #F2F5F6;
+  --surface: #FFFFFF;
+  --surface-2: #E9EEF0;
+  --ink: #14212B;
+  --muted: #566772;
+  --line: #D5DDE1;
+  --accent: #0B6B6F;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D9EEEE;
+  --ok: #17784A;
+  --ok-bg: #DDF1E6;
+  --bad: #B3322B;
+  --bad-bg: #F8E1DF;
+  --warn: #8F5F00;
+  --warn-bg: #FBEBC8;
+  --font-body: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E151A; --surface: #162026; --surface-2: #1E2B33; --ink: #E4ECF0; --muted: #94A5AF; --line: #2A3944;
+    --accent: #4FC3B8; --accent-ink: #082325; --accent-soft: #15383A;
+    --ok: #4CC38A; --ok-bg: #143223; --bad: #F2796E; --bad-bg: #3A1D1B; --warn: #E6B84A; --warn-bg: #3A2E10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E151A; --surface: #162026; --surface-2: #1E2B33; --ink: #E4ECF0; --muted: #94A5AF; --line: #2A3944;
+  --accent: #4FC3B8; --accent-ink: #082325; --accent-soft: #15383A;
+  --ok: #4CC38A; --ok-bg: #143223; --bad: #F2796E; --bad-bg: #3A1D1B; --warn: #E6B84A; --warn-bg: #3A2E10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 48px; }
+.app { max-width: 1040px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+header.top .lede { color: var(--muted); max-width: 56ch; margin-top: 6px; }
+label { font-size: 12px; font-weight: 600; color: var(--muted); }
+select, input[type=text], input[type=number], input[type=date] {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 10px; min-height: 38px; width: 100%; min-width: 0;
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 8px 14px; min-height: 38px; font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+.btn.danger { color: var(--bad); }
+.banner { border-radius: 8px; padding: 10px 14px; background: var(--warn-bg); color: var(--warn); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; font-weight: 500; }
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sechead { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+.kpi .v { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 600; overflow-wrap: anywhere; }
+.kpi .h { font-size: 12px; color: var(--muted); }
+.kpi.main { grid-column: span 2; background: var(--surface-2); border-color: transparent; }
+.kpi.main .v { font-size: 32px; letter-spacing: -0.02em; }
+.kpi .v.bad { color: var(--bad); } .kpi .v.warn { color: var(--warn); } .kpi .v.ok { color: var(--ok); }
+@media (max-width: 520px) { .kpi.main { grid-column: span 1; } }
+
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--surface); }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+td.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+td .sub { display: block; font-size: 11px; color: var(--muted); font-family: var(--font-body); white-space: normal; max-width: 34ch; }
+.empty { padding: 22px 16px; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.pill { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.pill.ok { background: var(--surface-2); color: var(--muted); }
+.pill.info { background: var(--accent-soft); color: var(--accent); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+
+form.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.fields > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fields .wide { grid-column: span 2; }
+@media (max-width: 520px) { .fields .wide { grid-column: span 1; } }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); font-weight: 500; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.msg { font-size: 13px; min-height: 18px; }
+.msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
+.importbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.importbox .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.importbox .row > div { display: flex; flex-direction: column; gap: 4px; }
+.importbox input[type=file] { font: inherit; max-width: 100%; }
+footer.notes { color: var(--muted); font-size: 12px; max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Contratos y pólizas</h1>
+    <p class="lede">Renovaciones de suministros y seguros, con la fecha límite para decidir antes de que se renueven solos.</p>
+  </header>
+
+  <div id="banner"></div>
+
+  <section aria-labelledby="h-res">
+    <h2 id="h-res">Resumen</h2>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section aria-labelledby="h-list">
+    <div class="sechead">
+      <h2 id="h-list">Próximas acciones</h2>
+      <div class="tools">
+        <button class="btn small primary" id="exp-ics" type="button">Exportar alertas al calendario (.ics)</button>
+        <button class="btn small" id="exp-csv" type="button">Exportar CSV</button>
+      </div>
+    </div>
+    <span class="msg" id="ics-msg" role="status" aria-live="polite"></span>
+    <div class="tablewrap" id="list"></div>
+  </section>
+
+  <section aria-labelledby="h-form">
+    <h2 id="h-form">Añadir contrato o póliza</h2>
+    <form class="card" id="cform" autocomplete="off">
+      <div class="fields">
+        <div><label for="f-type">Tipo</label>
+          <select id="f-type" style="width:100%">
+            <option value="luz">Luz</option><option value="gas">Gas</option><option value="agua">Agua</option>
+            <option value="internet">Internet y móvil</option><option value="hogar">Seguro de hogar</option>
+            <option value="coche">Seguro de coche</option><option value="vida">Seguro de vida</option>
+            <option value="salud">Seguro de salud</option><option value="otro">Otro</option>
+          </select></div>
+        <div><label for="f-company">Compañía</label><input type="text" id="f-company" required></div>
+        <div><label for="f-ref">Nº de contrato o póliza</label><input type="text" id="f-ref"></div>
+        <div><label for="f-venc">Vencimiento o renovación</label><input type="date" id="f-venc" required></div>
+        <div><label for="f-notice">Días de preaviso</label><input type="number" id="f-notice" min="0" step="1" inputmode="numeric" value="0"></div>
+        <div><label for="f-cost">Coste anual (€)</label><input type="number" id="f-cost" min="0" step="any" inputmode="decimal"></div>
+        <div><label for="f-pay">Forma de pago</label>
+          <select id="f-pay" style="width:100%"><option>Mensual</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
+        <div class="wide"><label for="f-doc">Dónde está el documento</label><input type="text" id="f-doc" placeholder="Carpeta, enlace o nombre del archivo"></div>
+        <div class="wide"><label for="f-note">Nota</label><input type="text" id="f-note" placeholder="Opcional"></div>
+      </div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="f-auto" checked> Se renueva automáticamente</label>
+        <label class="check"><input type="checkbox" id="f-compare" checked> Comparar precio antes de renovar</label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit" id="f-save">Guardar</button>
+        <button class="btn" type="button" id="f-cancel" hidden>Cancelar edición</button>
+        <span class="msg" id="f-msg" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="h-bk">
+    <h2 id="h-bk">Copia de seguridad</h2>
+    <div class="importbox">
+      <p class="muted">Los datos se guardan solo en este navegador y no se envían a ningún sitio. Descarga una copia de vez en cuando; sirve para recuperarlos o abrirlos en otro navegador o dispositivo.</p>
+      <div class="row">
+        <div><button class="btn" id="exp-backup" type="button">Descargar copia (JSON)</button></div>
+        <div><label for="imp-backup">Restaurar copia</label><input type="file" id="imp-backup" accept="application/json,.json"></div>
+      </div>
+      <span class="msg" id="bk-msg" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p>La fecha límite es el vencimiento menos los días de preaviso. Estado: «Comparar precios» desde 60 días antes de esa fecha límite, «Decidir ya» desde 30 días antes. Si un contrato se renueva solo y su fecha ya pasó, se calcula el siguiente año.</p>
+    <p>En seguros suele exigirse un mes de preaviso para oponerse a la prórroga: comprueba el plazo exacto en tu póliza. El archivo .ics crea eventos con alertas a las 9:00; ábrelo en el calendario de tu móvil o de tu ordenador.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var eurF = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+  var eur = function (v) { return eurF.format(Math.abs(v) < 0.005 ? 0 : v); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  var TYPES = { luz: 'Luz', gas: 'Gas', agua: 'Agua', internet: 'Internet y móvil', hogar: 'Seguro de hogar', coche: 'Seguro de coche', vida: 'Seguro de vida', salud: 'Seguro de salud', otro: 'Otro' };
+  var GROUP = { luz: 'sum', gas: 'sum', agua: 'sum', internet: 'sum', hogar: 'seg', coche: 'seg', vida: 'seg', salud: 'seg', otro: 'otro' };
+  var PAYS = ['Mensual', 'Trimestral', 'Semestral', 'Anual'];
+
+  /* ---------- Fechas ---------- */
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function todayStr() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function toUTC(s) { var p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); }
+  function diffDays(a, b) { return Math.round((toUTC(b) - toUTC(a)) / 86400000); }
+  function addDays(s, n) { return new Date(toUTC(s) + n * 86400000).toISOString().slice(0, 10); }
+  function addYears(s, n) { var p = s.split('-').map(Number); return new Date(Date.UTC(p[0] + n, p[1] - 1, p[2])).toISOString().slice(0, 10); }
+  function fdate(d) { var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+  /* ---------- Análisis de cada contrato ---------- */
+  function analyze(c, today) {
+    var venc = c.venc, est = false, guard = 0;
+    if (c.auto) { while (diffDays(today, venc) < 0 && guard++ < 200) { venc = addYears(venc, 1); est = true; } }
+    var pre = Math.max(0, Number(c.notice) || 0);
+    var limit = addDays(venc, -pre);
+    var dV = diffDays(today, venc), dL = diffDays(today, limit), st;
+    if (dV < 0) st = { k: 'bad', t: 'Vencido' };
+    else if (dL < 0) st = { k: 'bad', t: 'Preaviso pasado' };
+    else if (dL <= 30) st = { k: 'warn', t: 'Decidir ya' };
+    else if (dL <= 60) st = { k: 'info', t: 'Comparar precios' };
+    else st = { k: 'ok', t: 'Al día' };
+    return { venc: venc, est: est, pre: pre, limit: limit, dV: dV, dL: dL, st: st };
+  }
+
+  /* ---------- Datos ---------- */
+  var DEMO = (function () {
+    var t = todayStr();
+    return [
+      { id: 'd1', type: 'luz', company: 'Eléctrica Norte (ejemplo)', ref: 'ES00-1234', venc: addDays(t, 25), notice: 0, cost: 612, pay: 'Mensual', auto: true, compare: true, doc: '', note: '' },
+      { id: 'd2', type: 'hogar', company: 'Aseguradora Sur (ejemplo)', ref: 'H-778812', venc: addDays(t, 75), notice: 30, cost: 285, pay: 'Anual', auto: true, compare: true, doc: '', note: '' },
+      { id: 'd3', type: 'coche', company: 'Seguros Centro (ejemplo)', ref: 'C-445501', venc: addDays(t, 200), notice: 30, cost: 410, pay: 'Semestral', auto: true, compare: true, doc: '', note: '' },
+      { id: 'd4', type: 'gas', company: 'Gas Litoral (ejemplo)', ref: '', venc: addDays(t, 10), notice: 15, cost: 340, pay: 'Trimestral', auto: false, compare: true, doc: '', note: '' }
+    ];
+  })();
+
+  var STORE_KEY = 'contratos-polizas-v1';
+  var STORE_FAIL = 'Este navegador no permite guardar datos en esta página. Lo que registres se perderá al cerrarla: descarga una copia de seguridad.';
+  var state = { items: [], demo: false, editing: null, loaded: false, storeError: '', noticeTouched: false };
+
+  function current() { return state.demo ? DEMO : state.items; }
+  function newId() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ app: 'contratos-polizas', version: 1, items: state.items }));
+      if (state.storeError === STORE_FAIL) state.storeError = '';
+    } catch (e) { state.storeError = STORE_FAIL; }
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) { var d = JSON.parse(raw); if (d && Array.isArray(d.items)) state.items = d.items; }
+    } catch (e) { state.storeError = STORE_FAIL; }
+    state.loaded = true;
+  }
+
+  /* ---------- Render ---------- */
+  function kpi(label, value, cls, hint, main) {
+    return '<div class="kpi' + (main ? ' main' : '') + '"><span class="k">' + label + '</span><span class="v ' + (cls || '') + '">' + value + '</span>' + (hint ? '<span class="h">' + hint + '</span>' : '') + '</div>';
+  }
+
+  function render() {
+    var today = todayStr();
+    var rows = current().map(function (c) { return { c: c, a: analyze(c, today) }; })
+      .sort(function (x, y) { return x.a.dL - y.a.dL; });
+
+    var b = '';
+    if (state.demo) b = '<div class="banner">Estás viendo datos de ejemplo, no se guardan. Registra tu primer contrato para salir.<button class="btn small" id="b-exit" type="button">Salir del ejemplo</button></div>';
+    else if (state.storeError) b = '<div class="banner">' + esc(state.storeError) + '</div>';
+    $('#banner').innerHTML = b;
+
+    var total = 0, sum = 0, seg = 0, attn = 0;
+    rows.forEach(function (r) {
+      var cost = Number(r.c.cost) || 0; total += cost;
+      if (GROUP[r.c.type] === 'sum') sum += cost; else if (GROUP[r.c.type] === 'seg') seg += cost;
+      if (r.a.st.k === 'warn' || r.a.st.k === 'bad') attn++;
+    });
+    var next = rows.filter(function (r) { return r.a.dL >= 0; })[0];
+    var k = '';
+    k += kpi('Coste anual total', eur(total), '', rows.length + (rows.length === 1 ? ' contrato' : ' contratos'), true);
+    k += kpi('Suministros', eur(sum), '');
+    k += kpi('Seguros', eur(seg), '');
+    k += kpi('Requieren atención', String(attn), attn ? (rows.some(function (r) { return r.a.st.k === 'bad'; }) ? 'bad' : 'warn') : 'ok', attn ? 'Decidir ya o plazo pasado' : 'Nada urgente');
+    k += kpi('Próxima fecha límite', next ? fdate(next.a.limit) : '—', '', next ? esc(TYPES[next.c.type] + ' · ' + next.c.company) : 'Sin fechas por delante');
+    $('#kpis').innerHTML = k;
+
+    if (!state.loaded) {
+      $('#list').innerHTML = '<div class="empty"><span>Cargando…</span></div>';
+    } else if (!rows.length) {
+      $('#list').innerHTML = '<div class="empty"><span>Aún no hay contratos. Añade el primero abajo o mira cómo queda con datos de ejemplo.</span><button class="btn small" id="b-demo" type="button">Ver ejemplo</button></div>';
+    } else {
+      var h = '<table><thead><tr><th>Estado</th><th>Contrato</th><th>Vencimiento</th><th>Decidir antes de</th><th class="r">Coste anual</th><th></th></tr></thead><tbody>';
+      rows.forEach(function (r) {
+        var c = r.c, a = r.a;
+        var venc = fdate(a.venc);
+        var vsub = c.auto ? (a.est ? 'Renovación automática, fecha estimada' : 'Se renueva solo') : 'No se renueva solo';
+        var days = a.dL === 0 ? 'hoy' : (a.dL > 0 ? 'en ' + a.dL + ' días' : 'hace ' + (-a.dL) + ' días');
+        var lsub = a.pre > 0 ? a.pre + ' días de preaviso · ' + days : 'sin preaviso · ' + days;
+        h += '<tr><td><span class="pill ' + a.st.k + '">' + a.st.t + '</span></td>' +
+          '<td>' + esc(TYPES[c.type] || c.type) + ' · ' + esc(c.company) + (c.ref ? '<span class="sub">' + esc(c.ref) + '</span>' : '') +
+          (c.doc ? '<span class="sub">Documento: ' + esc(c.doc) + '</span>' : '') + (c.note ? '<span class="sub">' + esc(c.note) + '</span>' : '') + '</td>' +
+          '<td class="num">' + venc + '<span class="sub">' + vsub + '</span></td>' +
+          '<td class="num">' + fdate(a.limit) + '<span class="sub">' + lsub + '</span></td>' +
+          '<td class="r num">' + eur(Number(c.cost) || 0) + '<span class="sub" style="margin-left:auto">' + esc(c.pay || '') + (c.compare ? ' · revisar precio' : '') + '</span></td>' +
+          '<td>' + (state.demo ? '' : '<button class="btn small" type="button" data-edit="' + esc(c.id) + '">Editar</button> <button class="btn small danger" type="button" data-del="' + esc(c.id) + '">Borrar</button>') + '</td></tr>';
+      });
+      $('#list').innerHTML = h + '</tbody></table>';
+    }
+  }
+
+  /* ---------- Formulario ---------- */
+  function setMsg(el, text, cls) { el.textContent = text; el.className = 'msg' + (cls ? ' ' + cls : ''); }
+  function defaultNotice(type) { return GROUP[type] === 'seg' ? 30 : 0; }
+  function resetForm() {
+    state.editing = null; state.noticeTouched = false;
+    $('#cform').reset();
+    $('#f-notice').value = defaultNotice($('#f-type').value);
+    $('#f-save').textContent = 'Guardar';
+    $('#f-cancel').hidden = true;
+  }
+  function fillForm(c) {
+    state.editing = c; state.noticeTouched = true;
+    $('#f-type').value = c.type; $('#f-company').value = c.company; $('#f-ref').value = c.ref || ''; $('#f-venc').value = c.venc;
+    $('#f-notice').value = c.notice || 0; $('#f-cost').value = c.cost || ''; $('#f-pay').value = c.pay || 'Anual'; $('#f-doc').value = c.doc || '';
+    $('#f-note').value = c.note || ''; $('#f-auto').checked = !!c.auto; $('#f-compare').checked = !!c.compare;
+    $('#f-save').textContent = 'Guardar cambios'; $('#f-cancel').hidden = false;
+    $('#cform').scrollIntoView({ block: 'center' });
+  }
+  $('#f-notice').addEventListener('input', function () { state.noticeTouched = true; });
+  $('#f-type').addEventListener('change', function () { if (!state.noticeTouched) $('#f-notice').value = defaultNotice(this.value); });
+
+  $('#cform').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msg = $('#f-msg');
+    var c = {
+      type: $('#f-type').value, company: $('#f-company').value.trim(), ref: $('#f-ref').value.trim(), venc: $('#f-venc').value,
+      notice: Math.max(0, parseInt($('#f-notice').value, 10) || 0), cost: parseFloat($('#f-cost').value) || 0, pay: $('#f-pay').value,
+      doc: $('#f-doc').value.trim(), note: $('#f-note').value.trim(), auto: $('#f-auto').checked, compare: $('#f-compare').checked
+    };
+    if (!c.company || !c.venc) { setMsg(msg, 'Indica la compañía y la fecha de vencimiento.', 'err'); return; }
+    if (state.demo) state.demo = false;
+    var wasEditing = !!state.editing;
+    if (wasEditing) { c.id = state.editing.id; state.items = state.items.map(function (x) { return x.id === c.id ? c : x; }); }
+    else { c.id = newId(); state.items = state.items.concat([c]); }
+    persist(); resetForm(); render();
+    setMsg(msg, wasEditing ? 'Cambios guardados.' : 'Contrato guardado.', 'ok');
+  });
+  $('#f-cancel').addEventListener('click', function () { resetForm(); setMsg($('#f-msg'), ''); });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.edit) { var c = current().find(function (x) { return x.id === t.dataset.edit; }); if (c) fillForm(c); return; }
+    if (t.dataset.del) {
+      if (t.dataset.armed) { state.items = state.items.filter(function (x) { return x.id !== t.dataset.del; }); persist(); render(); }
+      else { t.dataset.armed = '1'; t.textContent = 'Confirmar borrado'; }
+      return;
+    }
+    if (t.id === 'b-demo') { state.demo = true; render(); return; }
+    if (t.id === 'b-exit') { state.demo = false; render(); return; }
+  });
+
+  /* ---------- Descargas ---------- */
+  function download(name, text, mime) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+  function csvCell(s) { s = String(s == null ? '' : s); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+
+  $('#exp-csv').addEventListener('click', function () {
+    var today = todayStr();
+    var L = ['Tipo;Compania;Referencia;Vencimiento;Preaviso (dias);Fecha limite;Renueva solo;Coste anual;Forma de pago;Comparar precio;Documento;Nota'];
+    current().forEach(function (c) {
+      var a = analyze(c, today);
+      L.push([TYPES[c.type], csvCell(c.company), csvCell(c.ref), a.venc, a.pre, a.limit, c.auto ? 'Si' : 'No', Number(c.cost || 0).toFixed(2).replace('.', ','), c.pay || '', c.compare ? 'Si' : 'No', csvCell(c.doc), csvCell(c.note)].join(';'));
+    });
+    download('contratos-polizas.csv', '\uFEFF' + L.join('\r\n'), 'text/csv;charset=utf-8');
+  });
+
+  /* .ics: eventos de día completo con alertas a las 9:00 */
+  function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+  function fold(line) { var out = []; while (line.length > 73) { out.push(line.slice(0, 73)); line = ' ' + line.slice(73); } out.push(line); return out; }
+  function ymd(s) { return s.replace(/-/g, ''); }
+  function alarm(n, desc) {
+    var trig = n === 0 ? 'PT9H' : (n === 1 ? '-PT15H' : '-P' + (n - 1) + 'DT15H');
+    return ['BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape(desc), 'TRIGGER:' + trig, 'END:VALARM'];
+  }
+  function buildIcs() {
+    var today = todayStr();
+    var stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    var out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Contratos y polizas//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Contratos y pólizas'];
+    var count = 0;
+    function ev(uid, date, summary, desc, alarms, yearly) {
+      if (date < today) return;
+      var L = ['BEGIN:VEVENT', 'UID:' + uid + '@contratos-polizas', 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + ymd(date), 'DTEND;VALUE=DATE:' + ymd(addDays(date, 1)),
+        'SUMMARY:' + icsEscape(summary), 'DESCRIPTION:' + icsEscape(desc)];
+      if (yearly) L.push('RRULE:FREQ=YEARLY');
+      alarms.forEach(function (n) { L = L.concat(alarm(n, summary)); });
+      L.push('END:VEVENT');
+      L.forEach(function (l) { out = out.concat(fold(l)); });
+      count++;
+    }
+    state.items.forEach(function (c) {
+      var a = analyze(c, today);
+      var name = (TYPES[c.type] || c.type) + ' · ' + c.company;
+      var info = name + (c.ref ? ' (' + c.ref + ')' : '') + '. Vencimiento: ' + fdate(a.venc) + (a.pre ? '. Preaviso: ' + a.pre + ' días' : '') + '.';
+      var yearly = !!c.auto;
+      if (c.compare) ev(c.id + '-comparar', addDays(a.venc, -60), 'Comparar precios: ' + name, info, [0], yearly);
+      if (a.pre > 0) ev(c.id + '-preaviso', a.limit, 'Último día de preaviso: ' + name, info, [7, 0], yearly);
+      ev(c.id + '-venc', a.venc, (c.auto ? 'Se renueva: ' : 'Vence: ') + name, info, [30, 7], yearly);
+    });
+    out.push('END:VCALENDAR');
+    return { text: out.join('\r\n') + '\r\n', count: count };
+  }
+  $('#exp-ics').addEventListener('click', function () {
+    var msg = $('#ics-msg');
+    if (state.demo) { setMsg(msg, 'Sal del ejemplo y registra tus contratos para exportar sus alertas.', 'err'); return; }
+    if (!state.items.length) { setMsg(msg, 'Añade al menos un contrato para exportar alertas.', 'err'); return; }
+    var r = buildIcs();
+    if (!r.count) { setMsg(msg, 'No hay fechas por delante que exportar.', 'err'); return; }
+    download('contratos-polizas.ics', r.text, 'text/calendar;charset=utf-8');
+    setMsg(msg, r.count + ' eventos con alertas. Abre el archivo descargado para añadirlos al calendario.', 'ok');
+  });
+
+  /* ---------- Copia de seguridad ---------- */
+  $('#exp-backup').addEventListener('click', function () {
+    var body = JSON.stringify({ app: 'contratos-polizas', version: 1, exported: new Date().toISOString(), items: state.items }, null, 1);
+    download('contratos-polizas-copia-' + todayStr() + '.json', body, 'application/json');
+    setMsg($('#bk-msg'), state.items.length + ' contratos en la copia.', 'ok');
+  });
+  function cleanItem(o) {
+    if (!o || typeof o !== 'object') return null;
+    if (typeof o.venc !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.venc) || !o.company) return null;
+    return {
+      id: typeof o.id === 'string' && o.id ? o.id : newId(), type: TYPES[o.type] ? o.type : 'otro', company: String(o.company).slice(0, 200),
+      ref: String(o.ref || '').slice(0, 100), venc: o.venc, notice: Math.max(0, parseInt(o.notice, 10) || 0), cost: Number(o.cost) || 0,
+      pay: PAYS.indexOf(o.pay) >= 0 ? o.pay : 'Anual', doc: String(o.doc || '').slice(0, 300), note: String(o.note || '').slice(0, 300),
+      auto: !!o.auto, compare: !!o.compare
+    };
+  }
+  $('#imp-backup').addEventListener('change', function () {
+    var f = this.files && this.files[0], msg = $('#bk-msg'), input = this;
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      try {
+        var data = JSON.parse(rd.result);
+        var list = (data && Array.isArray(data.items) ? data.items : []).map(cleanItem).filter(Boolean);
+        if (!list.length) { setMsg(msg, 'El archivo no contiene contratos válidos.', 'err'); return; }
+        var byId = {}; state.items.forEach(function (x) { byId[x.id] = x; });
+        list.forEach(function (x) { byId[x.id] = x; });
+        state.items = Object.keys(byId).map(function (k) { return byId[k]; });
+        state.demo = false; persist(); render();
+        setMsg(msg, list.length + ' contratos restaurados.', 'ok');
+      } catch (err) { setMsg(msg, 'No se pudo leer la copia: el archivo no es un JSON válido.', 'err'); }
+      input.value = '';
+    };
+    rd.readAsText(f);
+  });
+
+  load();
+  resetForm();
+  render();
+})();
+</script>
+</body>
+</html>
