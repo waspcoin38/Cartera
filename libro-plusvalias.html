@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Libro de Plusvalías</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una sola columna tipo libro mayor. Resultado del ejercicio arriba, detalle de ventas, registro de operaciones y lotes abiertos debajo. */
+:root {
+  color-scheme: light;
+  --bg: #F2F5F6;
+  --surface: #FFFFFF;
+  --surface-2: #E9EEF0;
+  --ink: #14212B;
+  --muted: #566772;
+  --line: #D5DDE1;
+  --accent: #0B6B6F;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D9EEEE;
+  --gain: #17784A;
+  --gain-bg: #DDF1E6;
+  --loss: #B3322B;
+  --loss-bg: #F8E1DF;
+  --warn: #8F5F00;
+  --warn-bg: #FBEBC8;
+  --font-body: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E151A; --surface: #162026; --surface-2: #1E2B33; --ink: #E4ECF0; --muted: #94A5AF; --line: #2A3944;
+    --accent: #4FC3B8; --accent-ink: #082325; --accent-soft: #15383A;
+    --gain: #4CC38A; --gain-bg: #14322328; --loss: #F2796E; --loss-bg: #3A1D1B; --warn: #E6B84A; --warn-bg: #3A2E10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E151A; --surface: #162026; --surface-2: #1E2B33; --ink: #E4ECF0; --muted: #94A5AF; --line: #2A3944;
+  --accent: #4FC3B8; --accent-ink: #082325; --accent-soft: #15383A;
+  --gain: #4CC38A; --gain-bg: #143223; --loss: #F2796E; --loss-bg: #3A1D1B; --warn: #E6B84A; --warn-bg: #3A2E10;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --surface: #162026; --gain-bg: #143223; } }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.5; padding-inline: 16px; padding-block: 24px 48px; }
+.app { max-width: 1040px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2, h3, p { margin: 0; }
+h1 { font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -0.02em; text-wrap: balance; }
+h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.muted { color: var(--muted); }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.pos { color: var(--gain); } .neg { color: var(--loss); } .zero { color: var(--muted); }
+
+header.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+header.top .lede { color: var(--muted); max-width: 52ch; margin-top: 6px; }
+.yearpick { display: flex; flex-direction: column; gap: 4px; }
+label { font-size: 12px; font-weight: 600; color: var(--muted); }
+select, input[type=text], input[type=number], input[type=date] {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 10px; min-height: 38px; width: 100%; min-width: 0;
+}
+select { width: auto; min-width: 120px; font-family: var(--font-num); font-weight: 500; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 8px 14px; min-height: 38px; font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+.btn.danger { color: var(--loss); }
+.linklike { background: none; border: 0; padding: 0; color: var(--accent); font-family: var(--font-num); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.banner { border-radius: 8px; padding: 10px 14px; background: var(--warn-bg); color: var(--warn); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; font-weight: 500; }
+.banner.info { background: var(--accent-soft); color: var(--accent); }
+
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sechead { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); font-weight: 500; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi .k { font-size: 12px; color: var(--muted); font-weight: 600; }
+.kpi .v { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 600; overflow-wrap: anywhere; }
+.kpi .h { font-size: 12px; color: var(--muted); }
+.kpi.main { grid-column: span 2; background: var(--surface-2); border-color: transparent; }
+.kpi.main .v { font-size: 32px; letter-spacing: -0.02em; }
+@media (max-width: 520px) { .kpi.main { grid-column: span 1; } }
+
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); background: var(--surface); position: sticky; top: 0; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+td.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+tr.sel td { background: var(--accent-soft); }
+td .sub { display: block; font-size: 11px; color: var(--muted); font-family: var(--font-body); white-space: normal; max-width: 38ch; }
+tfoot td { font-weight: 600; background: var(--surface-2); }
+.empty { padding: 22px 16px; color: var(--muted); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+.pill { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.pill.buy { background: var(--accent-soft); color: var(--accent); }
+.pill.sell { background: var(--surface-2); color: var(--ink); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--loss-bg); color: var(--loss); }
+
+form.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.fields > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fields .wide { grid-column: span 2; }
+@media (max-width: 520px) { .fields .wide { grid-column: span 1; } }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.msg { font-size: 13px; min-height: 18px; }
+.msg.err { color: var(--loss); } .msg.ok { color: var(--gain); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tools input[type=file] { font: inherit; max-width: 100%; }
+.importbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.importbox .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.importbox .row > div { display: flex; flex-direction: column; gap: 4px; }
+footer.notes { color: var(--muted); font-size: 12px; max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Libro de plusvalías</h1>
+      <p class="lede">Ganancias y pérdidas patrimoniales realizadas por ejercicio, con coste FIFO por valor.</p>
+    </div>
+    <div class="yearpick">
+      <label for="year">Ejercicio</label>
+      <select id="year"></select>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <section aria-labelledby="h-res">
+    <div class="sechead">
+      <h2 id="h-res">Resultado del ejercicio</h2>
+      <label class="check"><input type="checkbox" id="excl" checked> Excluir pérdidas con aviso de recompra</label>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section aria-labelledby="h-years">
+    <h2 id="h-years">Todos los ejercicios</h2>
+    <div class="tablewrap" id="years"></div>
+  </section>
+
+  <section aria-labelledby="h-sales">
+    <div class="sechead">
+      <h2 id="h-sales">Ventas del ejercicio</h2>
+      <button class="btn small" id="exp-sales" type="button">Exportar CSV</button>
+    </div>
+    <div class="tablewrap" id="sales"></div>
+  </section>
+
+  <section aria-labelledby="h-form">
+    <h2 id="h-form">Registrar operación</h2>
+    <form class="card" id="opform" autocomplete="off">
+      <div class="fields">
+        <div><label for="f-date">Fecha</label><input type="date" id="f-date" required></div>
+        <div><label for="f-type">Tipo</label>
+          <select id="f-type" style="width:100%"><option value="buy">Compra</option><option value="sell">Venta</option></select></div>
+        <div class="wide"><label for="f-asset">Activo</label><input type="text" id="f-asset" list="assets" placeholder="Nombre del fondo, ETF, acción o cripto" required></div>
+        <div><label for="f-isin">ISIN o ticker</label><input type="text" id="f-isin" placeholder="IE00B579F325"></div>
+        <div><label for="f-kind">Clase</label>
+          <select id="f-kind" style="width:100%"><option value="etf">ETF / ETC</option><option value="fondo">Fondo</option><option value="accion">Acción</option><option value="cripto">Cripto</option></select></div>
+        <div><label for="f-qty">Unidades</label><input type="number" id="f-qty" step="any" min="0" inputmode="decimal" required></div>
+        <div><label for="f-price">Precio por unidad (€)</label><input type="number" id="f-price" step="any" min="0" inputmode="decimal" required></div>
+        <div><label for="f-fees">Comisiones (€)</label><input type="number" id="f-fees" step="any" min="0" inputmode="decimal" value="0"></div>
+        <div class="wide"><label for="f-note">Nota</label><input type="text" id="f-note" placeholder="Opcional"></div>
+      </div>
+      <datalist id="assets"></datalist>
+      <div class="actions">
+        <button class="btn primary" type="submit" id="f-save">Guardar operación</button>
+        <button class="btn" type="button" id="f-cancel" hidden>Cancelar edición</button>
+        <span class="msg" id="f-msg" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </section>
+
+  <section aria-labelledby="h-ops">
+    <div class="sechead">
+      <h2 id="h-ops">Operaciones registradas</h2>
+      <button class="btn small" id="exp-ops" type="button">Exportar CSV</button>
+    </div>
+    <div class="tablewrap" id="ops"></div>
+  </section>
+
+  <section aria-labelledby="h-open">
+    <h2 id="h-open">Posiciones abiertas (lotes pendientes de vender)</h2>
+    <div class="tablewrap" id="open"></div>
+  </section>
+
+  <section aria-labelledby="h-imp">
+    <h2 id="h-imp">Importar posiciones del tracker</h2>
+    <div class="importbox">
+      <p class="muted">Carga el JSON de tu tracker de cartera para crear un saldo inicial por posición, con el coste que indica el tracker. Las unidades quedan provisionales (1 = posición completa): edita cada alta con las unidades reales antes de registrar una venta.</p>
+      <div class="row">
+        <div><label for="imp-date">Fecha de saldo inicial</label><input type="date" id="imp-date"></div>
+        <div><label for="imp-file">Archivo JSON</label><input type="file" id="imp-file" accept="application/json,.json"></div>
+      </div>
+      <span class="msg" id="imp-msg" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-bk">
+    <h2 id="h-bk">Copia de seguridad</h2>
+    <div class="importbox">
+      <p class="muted">Tus operaciones se guardan solo en este navegador y no se envían a ningún sitio. Descarga una copia de vez en cuando; sirve para recuperarlas o abrirlas en otro navegador o dispositivo.</p>
+      <div class="row">
+        <div><button class="btn" id="exp-backup" type="button">Descargar copia (JSON)</button></div>
+        <div><label for="imp-backup">Restaurar copia</label><input type="file" id="imp-backup" accept="application/json,.json"></div>
+      </div>
+      <span class="msg" id="bk-msg" role="status" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <footer class="notes">
+    <p>Cálculo orientativo. Método FIFO por ISIN o ticker. Regla antiaplicación: 2 meses antes y después en valores cotizados (ETF, acciones) y 1 año en fondos; no se aplica a cripto. Las pérdidas netas se compensan con ganancias de los 4 ejercicios siguientes. La cuota usa la escala del ahorro (19 % a 28 %) y no incluye dividendos, intereses ni retenciones.</p>
+    <p>Los traspasos entre fondos no son ventas y todavía no están contemplados. Contrasta las cifras con el certificado fiscal de tu entidad antes de declarar.</p>
+  </footer>
+</div>
+
+<script>
+// Motor de cálculo: FIFO por valor homogéneo, regla antiaplicación, compensación 4 años, escala del ahorro.
+// Fechas en formato 'YYYY-MM-DD'. Importes en euros.
+
+var KIND_RULE = {
+  fondo: { months: 12 },   // participaciones no cotizadas: 1 año antes/después
+  etf: { months: 2 },      // valores cotizados: 2 meses antes/después
+  accion: { months: 2 },
+  cripto: null             // la regla no se aplica
+};
+
+// Escala del ahorro (base imponible del ahorro, estatal + autonómica estándar). Revisar cada ejercicio.
+var AHORRO_SCALE = [
+  { upTo: 6000, rate: 0.19 },
+  { upTo: 50000, rate: 0.21 },
+  { upTo: 200000, rate: 0.23 },
+  { upTo: 300000, rate: 0.27 },
+  { upTo: Infinity, rate: 0.28 }
+];
+
+function keyOf(op) {
+  return String(op.isin || op.asset || '').trim().toUpperCase();
+}
+
+function addMonths(d, n) {
+  var p = d.split('-').map(Number);
+  var dt = new Date(Date.UTC(p[0], p[1] - 1 + n, p[2]));
+  return dt.toISOString().slice(0, 10);
+}
+
+function taxScale(base) {
+  if (base <= 0) return 0;
+  var tax = 0, prev = 0;
+  for (var i = 0; i < AHORRO_SCALE.length; i++) {
+    var lim = AHORRO_SCALE[i].upTo;
+    var slice = Math.min(base, lim) - prev;
+    if (slice > 0) tax += slice * AHORRO_SCALE[i].rate;
+    prev = lim;
+    if (base <= lim) break;
+  }
+  return tax;
+}
+
+function sortOps(ops) {
+  return ops.slice().sort(function (a, b) {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    if (a.type !== b.type) return a.type === 'buy' ? -1 : 1;
+    return (a.ord || 0) - (b.ord || 0);
+  });
+}
+
+function compute(ops) {
+  var sorted = sortOps(ops);
+  var lots = {};
+  var sales = [];
+  sorted.forEach(function (op) {
+    var key = keyOf(op);
+    var fees = Number(op.fees) || 0;
+    if (op.type === 'buy') {
+      var unit = (op.qty * op.price + fees) / op.qty;
+      (lots[key] = lots[key] || []).push({
+        opId: op.id, date: op.date, qty: op.qty, remaining: op.qty,
+        unitCost: unit, asset: op.asset, key: key, kind: op.kind
+      });
+    } else {
+      var L = lots[key] || [];
+      var need = op.qty, cost = 0, used = [];
+      for (var i = 0; i < L.length && need > 1e-9; i++) {
+        var l = L[i];
+        if (l.remaining <= 1e-9) continue;
+        var t = Math.min(l.remaining, need);
+        l.remaining -= t;
+        need -= t;
+        cost += t * l.unitCost;
+        used.push({ date: l.date, qty: t, unitCost: l.unitCost });
+      }
+      var proceeds = op.qty * op.price - fees;
+      sales.push({
+        id: op.id, date: op.date, year: Number(op.date.slice(0, 4)),
+        asset: op.asset, key: key, kind: op.kind, qty: op.qty,
+        proceeds: proceeds, cost: cost, gain: proceeds - cost,
+        used: used, missing: need > 1e-9 ? need : 0,
+        openAfter: L.filter(function (x) { return x.remaining > 1e-9; }).map(function (x) { return x.date; }),
+        blocked: false, blockReason: ''
+      });
+    }
+  });
+
+  // Regla antiaplicación: pérdida con recompra de valores homogéneos dentro del plazo.
+  sales.forEach(function (s) {
+    if (s.gain >= 0) return;
+    var rule = KIND_RULE[s.kind];
+    if (!rule) return;
+    var from = addMonths(s.date, -rule.months);
+    var to = addMonths(s.date, rule.months);
+    var before = s.openAfter.some(function (d) { return d >= from && d <= s.date; });
+    var after = sorted.some(function (o) {
+      return o.type === 'buy' && keyOf(o) === s.key && o.date > s.date && o.date <= to;
+    });
+    if (before || after) {
+      s.blocked = true;
+      s.blockReason = (before && after) ? 'compras previas y posteriores dentro del plazo'
+        : before ? 'quedan participaciones compradas dentro del plazo previo'
+        : 'recompra posterior dentro del plazo';
+    }
+  });
+
+  var open = [];
+  Object.keys(lots).forEach(function (k) {
+    lots[k].forEach(function (l) {
+      if (l.remaining > 1e-9) open.push({
+        asset: l.asset, key: k, kind: l.kind, date: l.date,
+        qty: l.remaining, unitCost: l.unitCost, cost: l.remaining * l.unitCost
+      });
+    });
+  });
+  open.sort(function (a, b) { return a.asset < b.asset ? -1 : a.asset > b.asset ? 1 : (a.date < b.date ? -1 : 1); });
+
+  return { sales: sales, open: open };
+}
+
+function byYear(sales, excludeBlocked) {
+  var years = Array.from(new Set(sales.map(function (s) { return s.year; }))).sort();
+  var pool = [];
+  var rows = [];
+  years.forEach(function (y) {
+    var ys = sales.filter(function (s) { return s.year === y; });
+    var inc = ys.filter(function (s) { return !(excludeBlocked && s.blocked); });
+    var gains = 0, losses = 0, blockedLoss = 0;
+    inc.forEach(function (s) { if (s.gain > 0) gains += s.gain; else losses += s.gain; });
+    if (excludeBlocked) ys.forEach(function (s) { if (s.blocked) blockedLoss += s.gain; });
+    var net = gains + losses;
+    pool = pool.filter(function (p) { return y - p.year <= 4; });
+    var applied = 0;
+    if (net > 0) {
+      var room = net;
+      pool.forEach(function (p) {
+        var take = Math.min(p.amount, room);
+        p.amount -= take; room -= take; applied += take;
+      });
+      pool = pool.filter(function (p) { return p.amount > 1e-9; });
+    } else if (net < 0) {
+      pool.push({ year: y, amount: -net });
+    }
+    var base = Math.max(net, 0) - applied;
+    rows.push({
+      year: y, gains: gains, losses: losses, net: net, blockedLoss: blockedLoss,
+      applied: applied, base: base, tax: taxScale(base),
+      poolAfter: pool.map(function (p) { return { year: p.year, amount: p.amount, expires: p.year + 4 }; })
+    });
+  });
+  return rows;
+}
+
+if (typeof module !== 'undefined') module.exports = { compute: compute, byYear: byYear, taxScale: taxScale, keyOf: keyOf, addMonths: addMonths };
+
+</script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var eurF = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+  var eur = { format: function (v) { return eurF.format(Math.abs(v) < 0.005 ? 0 : v); } };
+  var numf = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 6 });
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var sgn = function (v) { return v > 0.004 ? 'pos' : v < -0.004 ? 'neg' : 'zero'; };
+  var fdate = function (d) { var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+  var KIND_LABEL = { etf: 'ETF / ETC', fondo: 'Fondo', accion: 'Acción', cripto: 'Cripto' };
+
+  // Ejemplo ilustrativo: no se guarda en ningún sitio.
+  var DEMO = [
+    { id: 'd1', ord: 1, date: '2024-02-12', type: 'buy', asset: 'ETF Mundo (ejemplo)', isin: 'EJ-MUNDO', kind: 'etf', qty: 40, price: 98.5, fees: 2 },
+    { id: 'd2', ord: 2, date: '2024-09-03', type: 'buy', asset: 'ETF Mundo (ejemplo)', isin: 'EJ-MUNDO', kind: 'etf', qty: 20, price: 104.2, fees: 2 },
+    { id: 'd3', ord: 3, date: '2025-04-22', type: 'sell', asset: 'ETF Mundo (ejemplo)', isin: 'EJ-MUNDO', kind: 'etf', qty: 50, price: 118, fees: 3 },
+    { id: 'd4', ord: 4, date: '2024-05-06', type: 'buy', asset: 'Acción Banco (ejemplo)', isin: 'EJ-BANCO', kind: 'accion', qty: 300, price: 4.1, fees: 4 },
+    { id: 'd5', ord: 5, date: '2025-10-15', type: 'sell', asset: 'Acción Banco (ejemplo)', isin: 'EJ-BANCO', kind: 'accion', qty: 300, price: 3.6, fees: 4 },
+    { id: 'd6', ord: 6, date: '2025-02-10', type: 'buy', asset: 'Cripto A (ejemplo)', isin: 'EJ-CRIPTO', kind: 'cripto', qty: 0.25, price: 80000, fees: 12 },
+    { id: 'd7', ord: 7, date: '2026-03-18', type: 'sell', asset: 'Cripto A (ejemplo)', isin: 'EJ-CRIPTO', kind: 'cripto', qty: 0.1, price: 92000, fees: 8 }
+  ];
+
+  var state = { dbOps: [], localOps: [], demo: false, year: null, excl: true, editing: null, loaded: false, storeError: '', mode: 'local' };
+  var col = null;
+
+  function currentOps() {
+    if (state.demo) return DEMO;
+    return state.localOps;
+  }
+
+  /* ---------- Almacén (localStorage del navegador) ---------- */
+  var STORE_KEY = 'libro-plusvalias-v1';
+  function newId() { return 'op' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  var STORE_FAIL = 'Este navegador no permite guardar datos en esta página. Lo que registres se perderá al cerrarla: descarga una copia de seguridad.';
+
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ app: 'libro-plusvalias', version: 1, ops: state.localOps }));
+      if (state.storeError === STORE_FAIL) state.storeError = '';
+    } catch (e) { state.storeError = STORE_FAIL; }
+  }
+  async function saveOp(o) {
+    var data = Object.assign({}, o);
+    if (data.id) { state.localOps = state.localOps.map(function (x) { return x.id === data.id ? data : x; }); }
+    else { data.id = newId(); state.localOps = state.localOps.concat([data]); }
+    persist(); render();
+  }
+  async function removeOp(id) {
+    state.localOps = state.localOps.filter(function (x) { return x.id !== id; });
+    persist(); render();
+  }
+  function initStore() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) { var d = JSON.parse(raw); if (d && Array.isArray(d.ops)) state.localOps = d.ops; }
+    } catch (e) { state.storeError = STORE_FAIL; }
+    state.loaded = true; render();
+  }
+
+  /* ---------- Render ---------- */
+  function kpi(label, value, cls, hint, main) {
+    return '<div class="kpi' + (main ? ' main' : '') + '"><span class="k">' + label + '</span><span class="v ' + (cls || '') + '">' + value + '</span>' + (hint ? '<span class="h">' + hint + '</span>' : '') + '</div>';
+  }
+
+  function render() {
+    var ops = currentOps();
+    var calc = compute(ops);
+    var rows = byYear(calc.sales, state.excl);
+    var years = rows.map(function (r) { return r.year; });
+    var cy = new Date().getFullYear();
+    var optYears = Array.from(new Set(years.concat([cy]))).sort();
+    if (!state.yearTouched || optYears.indexOf(state.year) < 0) state.year = years.length ? years[years.length - 1] : cy;
+
+    var sel = $('#year');
+    sel.innerHTML = optYears.slice().reverse().map(function (y) { return '<option value="' + y + '"' + (y === state.year ? ' selected' : '') + '>' + y + '</option>'; }).join('');
+
+    // Banner
+    var b = '';
+    if (state.demo) b = '<div class="banner">Estás viendo datos de ejemplo, no se guardan. Registra tu primera operación o importa tu cartera para salir.<button class="btn small" id="b-exit" type="button">Salir del ejemplo</button></div>';
+    else if (state.storeError) b = '<div class="banner">' + esc(state.storeError) + '</div>';
+    $('#banner').innerHTML = b;
+
+    var row = rows.find(function (r) { return r.year === state.year; }) || { gains: 0, losses: 0, net: 0, blockedLoss: 0, applied: 0, base: 0, tax: 0, poolAfter: [] };
+
+    // KPIs
+    var pend = row.poolAfter.reduce(function (a, p) { return a + p.amount; }, 0);
+    var k = '';
+    k += kpi('Resultado neto ' + state.year, eur.format(row.net), sgn(row.net), row.net < 0 ? 'Pérdida compensable en los 4 ejercicios siguientes' : 'Ganancias menos pérdidas realizadas', true);
+    k += kpi('Ganancias', eur.format(row.gains), 'pos');
+    k += kpi('Pérdidas', eur.format(row.losses), row.losses < 0 ? 'neg' : 'zero');
+    k += kpi('Compensado de años anteriores', eur.format(-row.applied), row.applied > 0 ? 'neg' : 'zero');
+    k += kpi('Base a tributar', eur.format(row.base), '');
+    k += kpi('Cuota estimada', eur.format(row.tax), '', 'Escala del ahorro, solo estas ventas');
+    if (state.excl && row.blockedLoss < 0) k += kpi('Pérdidas con aviso', eur.format(row.blockedLoss), 'neg', 'No computadas: recompra dentro del plazo');
+    if (pend > 0.004) k += kpi('Pérdidas por compensar', eur.format(pend), 'neg', row.poolAfter.map(function (p) { return p.year + ' (hasta ' + p.expires + ')'; }).join(', '));
+    $('#kpis').innerHTML = k;
+
+    // Todos los ejercicios
+    if (!rows.length) {
+      $('#years').innerHTML = '<div class="empty"><span>Todavía no hay ventas. Cuando registres la primera venta aparecerá aquí el resumen de cada ejercicio.</span></div>';
+    } else {
+      var yh = '<table><thead><tr><th>Ejercicio</th><th class="r">Ganancias</th><th class="r">Pérdidas</th><th class="r">Neto</th><th class="r">Compensado</th><th class="r">Base</th><th class="r">Cuota est.</th></tr></thead><tbody>';
+      rows.slice().reverse().forEach(function (r) {
+        yh += '<tr class="' + (r.year === state.year ? 'sel' : '') + '"><td><button class="linklike" type="button" data-year="' + r.year + '">' + r.year + '</button></td>' +
+          '<td class="r num pos">' + eur.format(r.gains) + '</td><td class="r num ' + (r.losses < 0 ? 'neg' : 'zero') + '">' + eur.format(r.losses) + '</td>' +
+          '<td class="r num ' + sgn(r.net) + '">' + eur.format(r.net) + '</td><td class="r num">' + eur.format(-r.applied) + '</td>' +
+          '<td class="r num">' + eur.format(r.base) + '</td><td class="r num">' + eur.format(r.tax) + '</td></tr>';
+      });
+      $('#years').innerHTML = yh + '</tbody></table>';
+    }
+
+    // Ventas del ejercicio
+    var ys = calc.sales.filter(function (s) { return s.year === state.year; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    if (!ys.length) {
+      $('#sales').innerHTML = '<div class="empty"><span>No hay ventas en ' + state.year + '.</span></div>';
+    } else {
+      var sh = '<table><thead><tr><th>Fecha</th><th>Activo</th><th class="r">Unidades</th><th class="r">Transmisión</th><th class="r">Adquisición FIFO</th><th class="r">Resultado</th><th>Avisos</th></tr></thead><tbody>';
+      var tp = 0, tc = 0, tg = 0;
+      ys.forEach(function (s) {
+        tp += s.proceeds; tc += s.cost; tg += s.gain;
+        var chips = '';
+        if (s.blocked) chips += '<span class="pill warn">Pérdida diferida</span><span class="sub">' + esc(s.blockReason) + '</span>';
+        if (s.missing > 0) chips += '<span class="pill bad">Sin saldo: faltan ' + numf.format(s.missing) + ' uds</span>';
+        var fifo = s.used.slice(0, 3).map(function (u) { return numf.format(u.qty) + ' uds de ' + fdate(u.date) + ' a ' + eur.format(u.unitCost); }).join(' · ') + (s.used.length > 3 ? ' · …' : '');
+        sh += '<tr><td class="num">' + fdate(s.date) + '</td><td>' + esc(s.asset) + '<span class="sub">' + esc(fifo) + '</span></td><td class="r num">' + numf.format(s.qty) + '</td>' +
+          '<td class="r num">' + eur.format(s.proceeds) + '</td><td class="r num">' + eur.format(s.cost) + '</td><td class="r num ' + sgn(s.gain) + '">' + eur.format(s.gain) + '</td><td>' + chips + '</td></tr>';
+      });
+      sh += '</tbody><tfoot><tr><td colspan="3">Total</td><td class="r num">' + eur.format(tp) + '</td><td class="r num">' + eur.format(tc) + '</td><td class="r num ' + sgn(tg) + '">' + eur.format(tg) + '</td><td></td></tr></tfoot></table>';
+      $('#sales').innerHTML = sh;
+    }
+
+    // Operaciones
+    var sortedOps = ops.slice().sort(function (a, b) { return a.date === b.date ? (b.ord || 0) - (a.ord || 0) : (a.date < b.date ? 1 : -1); });
+    if (!state.loaded) {
+      $('#ops').innerHTML = '<div class="empty"><span>Cargando operaciones…</span></div>';
+    } else if (!sortedOps.length) {
+      $('#ops').innerHTML = '<div class="empty"><span>Aún no hay operaciones. Registra la primera arriba, importa tus posiciones del tracker o mira cómo queda con datos de ejemplo.</span><button class="btn small" id="b-demo" type="button">Ver ejemplo</button></div>';
+    } else {
+      var oh = '<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Activo</th><th>Clase</th><th class="r">Unidades</th><th class="r">Precio</th><th class="r">Comisión</th><th class="r">Importe</th><th></th></tr></thead><tbody>';
+      sortedOps.forEach(function (o) {
+        var amt = o.qty * o.price;
+        oh += '<tr><td class="num">' + fdate(o.date) + '</td><td><span class="pill ' + o.type + '">' + (o.type === 'buy' ? 'Compra' : 'Venta') + '</span></td>' +
+          '<td>' + esc(o.asset) + (o.isin ? '<span class="sub">' + esc(o.isin) + '</span>' : '') + (o.note ? '<span class="sub">' + esc(o.note) + '</span>' : '') + '</td>' +
+          '<td>' + esc(KIND_LABEL[o.kind] || o.kind) + '</td><td class="r num">' + numf.format(o.qty) + '</td><td class="r num">' + eur.format(o.price) + '</td>' +
+          '<td class="r num">' + eur.format(o.fees || 0) + '</td><td class="r num">' + eur.format(amt) + '</td>' +
+          '<td>' + (state.demo ? '' : '<button class="btn small" type="button" data-edit="' + esc(o.id) + '">Editar</button> <button class="btn small danger" type="button" data-del="' + esc(o.id) + '">Borrar</button>') + '</td></tr>';
+      });
+      $('#ops').innerHTML = oh + '</tbody></table>';
+    }
+
+    // Lotes abiertos
+    if (!calc.open.length) {
+      $('#open').innerHTML = '<div class="empty"><span>No hay posiciones abiertas registradas.</span></div>';
+    } else {
+      var lh = '<table><thead><tr><th>Activo</th><th>Compra</th><th class="r">Unidades</th><th class="r">Coste unitario</th><th class="r">Coste total</th></tr></thead><tbody>';
+      var tot = 0;
+      calc.open.forEach(function (l) {
+        tot += l.cost;
+        lh += '<tr><td>' + esc(l.asset) + '</td><td class="num">' + fdate(l.date) + '</td><td class="r num">' + numf.format(l.qty) + '</td><td class="r num">' + eur.format(l.unitCost) + '</td><td class="r num">' + eur.format(l.cost) + '</td></tr>';
+      });
+      $('#open').innerHTML = lh + '</tbody><tfoot><tr><td colspan="4">Coste total abierto</td><td class="r num">' + eur.format(tot) + '</td></tr></tfoot></table>';
+    }
+
+    // Datalist
+    var seen = {};
+    ops.forEach(function (o) { seen[o.asset] = o; });
+    $('#assets').innerHTML = Object.keys(seen).map(function (a) { return '<option value="' + esc(a) + '"></option>'; }).join('');
+    state.known = seen;
+  }
+
+  /* ---------- Formulario ---------- */
+  function setMsg(el, text, cls) { el.textContent = text; el.className = 'msg' + (cls ? ' ' + cls : ''); }
+  function resetForm() {
+    state.editing = null;
+    $('#opform').reset();
+    $('#f-date').value = new Date().toISOString().slice(0, 10);
+    $('#f-fees').value = '0';
+    $('#f-save').textContent = 'Guardar operación';
+    $('#f-cancel').hidden = true;
+  }
+  function fillForm(o) {
+    state.editing = o;
+    $('#f-date').value = o.date; $('#f-type').value = o.type; $('#f-asset').value = o.asset; $('#f-isin').value = o.isin || '';
+    $('#f-kind').value = o.kind; $('#f-qty').value = o.qty; $('#f-price').value = o.price; $('#f-fees').value = o.fees || 0; $('#f-note').value = o.note || '';
+    $('#f-save').textContent = 'Guardar cambios';
+    $('#f-cancel').hidden = false;
+    $('#opform').scrollIntoView({ block: 'center' });
+  }
+
+  $('#f-asset').addEventListener('change', function () {
+    var k = state.known && state.known[this.value];
+    if (k && !state.editing) { if (!$('#f-isin').value) $('#f-isin').value = k.isin || ''; $('#f-kind').value = k.kind; }
+  });
+
+  $('#opform').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var msg = $('#f-msg');
+    var o = {
+      date: $('#f-date').value, type: $('#f-type').value, asset: $('#f-asset').value.trim(), isin: $('#f-isin').value.trim(),
+      kind: $('#f-kind').value, qty: parseFloat($('#f-qty').value), price: parseFloat($('#f-price').value),
+      fees: parseFloat($('#f-fees').value) || 0, note: $('#f-note').value.trim()
+    };
+    if (!o.date || !o.asset) { setMsg(msg, 'Indica la fecha y el activo.', 'err'); return; }
+    if (!(o.qty > 0)) { setMsg(msg, 'Las unidades deben ser mayores que cero.', 'err'); return; }
+    if (!(o.price >= 0)) { setMsg(msg, 'Indica el precio por unidad.', 'err'); return; }
+    if (state.demo) { state.demo = false; }
+    if (state.editing) { o.id = state.editing.id; o.ord = state.editing.ord || Date.now(); } else { o.ord = Date.now(); }
+    try {
+      await saveOp(o);
+      if (o.type === 'sell') { state.year = Number(o.date.slice(0, 4)); state.yearTouched = true; }
+      setMsg(msg, state.editing ? 'Cambios guardados.' : 'Operación guardada.', 'ok');
+      resetForm();
+      render();
+    } catch (err) {
+      setMsg(msg, 'No se pudo guardar (' + ((err && err.code) || 'error') + '). Comprueba que tienes permiso de edición en esta página.', 'err');
+    }
+  });
+  $('#f-cancel').addEventListener('click', function () { resetForm(); setMsg($('#f-msg'), ''); });
+
+  /* ---------- Eventos de tablas ---------- */
+  document.addEventListener('click', async function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.dataset.year) { state.year = Number(t.dataset.year); state.yearTouched = true; render(); return; }
+    if (t.dataset.edit) { var o = currentOps().find(function (x) { return x.id === t.dataset.edit; }); if (o) fillForm(o); return; }
+    if (t.dataset.del) {
+      if (t.dataset.armed) {
+        try { await removeOp(t.dataset.del); } catch (err) { setMsg($('#f-msg'), 'No se pudo borrar (' + ((err && err.code) || 'error') + ').', 'err'); }
+      } else { t.dataset.armed = '1'; t.textContent = 'Confirmar borrado'; }
+      return;
+    }
+    if (t.id === 'b-demo') { state.demo = true; render(); return; }
+    if (t.id === 'b-exit') { state.demo = false; render(); return; }
+  });
+  $('#year').addEventListener('change', function () { state.year = Number(this.value); state.yearTouched = true; render(); });
+  $('#excl').addEventListener('change', function () { state.excl = this.checked; render(); });
+
+  /* ---------- Importar ---------- */
+  function guessKind(r) {
+    var n = (r.n || '').toLowerCase(), c = r.c || '';
+    if (c === 'Bitcoin' && r.isin === 'BTC') return 'cripto';
+    if (c === 'Altcoins') return 'cripto';
+    if (c === 'Acciones') return 'accion';
+    if (/etf|etc|vwce|xtrackers|physical|shares/.test(n)) return 'etf';
+    return 'fondo';
+  }
+  $('#imp-date').value = new Date().getFullYear() + '-01-01';
+  $('#imp-file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; var msg = $('#imp-msg');
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = async function () {
+      try {
+        var data = JSON.parse(rd.result);
+        var rowsIn = (data.rows || []).filter(function (r) { return r.c !== 'Liquidez' && r.v > 0; });
+        if (!rowsIn.length) { setMsg(msg, 'El archivo no contiene posiciones importables.', 'err'); return; }
+        if (state.demo) state.demo = false;
+        var existing = {}; currentOps().forEach(function (o) { if ((o.note || '').indexOf('Saldo inicial') === 0) existing[keyOf(o)] = true; });
+        var added = 0, skipped = 0, date = $('#imp-date').value || (new Date().getFullYear() + '-01-01');
+        for (var i = 0; i < rowsIn.length; i++) {
+          var r = rowsIn[i];
+          var o = { date: date, type: 'buy', asset: String(r.n).trim(), isin: r.isin || '', kind: guessKind(r), qty: 1, price: Number(r.k) || 0, fees: 0, ord: Date.now() + i, note: 'Saldo inicial importado del tracker (unidades provisionales)' };
+          if (existing[keyOf(o)]) { skipped++; continue; }
+          await saveOp(o); added++;
+        }
+        render();
+        setMsg(msg, added + ' posiciones importadas' + (skipped ? ', ' + skipped + ' ya existían' : '') + '. Edita cada una con sus unidades reales.', 'ok');
+      } catch (err) { setMsg(msg, 'No se pudo leer el archivo (' + ((err && err.code) || 'JSON no válido') + ').', 'err'); }
+    };
+    rd.readAsText(f);
+    this.value = '';
+  });
+
+  /* ---------- Exportar ---------- */
+  function csvNum(n, d) { return Number(n).toFixed(d == null ? 2 : d).replace('.', ','); }
+  function csvCell(s) { s = String(s == null ? '' : s); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function download(name, text, mime) {
+    var blob = new Blob([text], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+  async function saveCsv(name, lines) { download(name, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8'); }
+  $('#exp-sales').addEventListener('click', function () {
+    var calc = compute(currentOps());
+    var ys = calc.sales.filter(function (s) { return s.year === state.year; });
+    var L = ['Ejercicio;Fecha venta;Activo;ISIN o ticker;Unidades;Valor de transmision;Valor de adquisicion FIFO;Resultado;Perdida diferida'];
+    ys.forEach(function (s) { L.push([s.year, s.date, csvCell(s.asset), csvCell(s.key), csvNum(s.qty, 6), csvNum(s.proceeds), csvNum(s.cost), csvNum(s.gain), s.blocked ? 'Si' : 'No'].join(';')); });
+    saveCsv('ventas-' + state.year + '.csv', L);
+  });
+  $('#exp-ops').addEventListener('click', function () {
+    var L = ['Fecha;Tipo;Activo;ISIN o ticker;Clase;Unidades;Precio;Comisiones;Nota'];
+    sortOps(currentOps()).forEach(function (o) { L.push([o.date, o.type === 'buy' ? 'Compra' : 'Venta', csvCell(o.asset), csvCell(o.isin), o.kind, csvNum(o.qty, 6), csvNum(o.price, 4), csvNum(o.fees || 0), csvCell(o.note)].join(';')); });
+    saveCsv('operaciones.csv', L);
+  });
+
+  /* ---------- Copia de seguridad ---------- */
+  $('#exp-backup').addEventListener('click', function () {
+    var body = JSON.stringify({ app: 'libro-plusvalias', version: 1, exported: new Date().toISOString(), ops: state.localOps }, null, 1);
+    download('libro-plusvalias-copia-' + new Date().toISOString().slice(0, 10) + '.json', body, 'application/json');
+    setMsg($('#bk-msg'), state.localOps.length + ' operaciones en la copia.', 'ok');
+  });
+  function cleanOp(o) {
+    if (!o || typeof o !== 'object') return null;
+    var okDate = typeof o.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.date);
+    var qty = Number(o.qty), price = Number(o.price);
+    if (!okDate || (o.type !== 'buy' && o.type !== 'sell') || !o.asset || !(qty > 0) || !(price >= 0)) return null;
+    return {
+      id: typeof o.id === 'string' && o.id ? o.id : newId(), ord: Number(o.ord) || Date.now(),
+      date: o.date, type: o.type, asset: String(o.asset).slice(0, 200), isin: String(o.isin || '').slice(0, 60),
+      kind: KIND_LABEL[o.kind] ? o.kind : 'etf', qty: qty, price: price, fees: Number(o.fees) || 0, note: String(o.note || '').slice(0, 300)
+    };
+  }
+  $('#imp-backup').addEventListener('change', function () {
+    var f = this.files && this.files[0]; var msg = $('#bk-msg'); var input = this;
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      try {
+        var data = JSON.parse(rd.result);
+        var list = (data && Array.isArray(data.ops) ? data.ops : []).map(cleanOp).filter(Boolean);
+        if (!list.length) { setMsg(msg, 'El archivo no contiene operaciones válidas.', 'err'); return; }
+        var byId = {}; state.localOps.forEach(function (o) { byId[o.id] = o; });
+        list.forEach(function (o) { byId[o.id] = o; });
+        state.localOps = Object.keys(byId).map(function (k) { return byId[k]; });
+        state.demo = false; persist(); render();
+        setMsg(msg, list.length + ' operaciones restauradas.', 'ok');
+      } catch (err) { setMsg(msg, 'No se pudo leer la copia: el archivo no es un JSON válido.', 'err'); }
+      input.value = '';
+    };
+    rd.readAsText(f);
+  });
+
+  resetForm();
+  render();
+  initStore();
+})();
+</script>
+
+</body>
+</html>
